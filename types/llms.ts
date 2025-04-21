@@ -7,6 +7,7 @@ export type LLMID =
   | MistralLLMID
   | GroqLLMID
   | PerplexityLLMID
+  | BedrockLLMID
 
 // OpenAI Models (UPDATED 5/13/24)
 export type OpenAILLMID =
@@ -60,6 +61,13 @@ export type PerplexityLLMID =
   | "sonar-small-online" // Sonar Small Online
   | "sonar-medium-chat" // Sonar Medium Chat
   | "sonar-medium-online" // Sonar Medium Online
+
+// Bedrock Models
+export type BedrockLLMID =
+  | "anthropic.claude-3-sonnet-20240229-v1:0" // Claude 3 Sonnet
+  | "anthropic.claude-3-haiku-20240307-v1:0" // Claude 3 Haiku
+  | "anthropic.claude-v2:1" // Claude 2.1
+  | "amazon.titan-text-express-v1" // Titan Text Express
 
 export interface LLM {
   modelId: LLMID

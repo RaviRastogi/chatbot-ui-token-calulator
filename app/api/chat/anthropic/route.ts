@@ -20,53 +20,94 @@ export async function POST(request: NextRequest) {
 
     checkApiKey(profile.anthropic_api_key, "Anthropic")
 
-    let ANTHROPIC_FORMATTED_MESSAGES: any = messages.slice(1)
+    // Format messages for Anthropic API
+    const systemMessage = messages[0]?.content || ""
+    const userMessages = messages.slice(1).filter(msg => msg.content)
 
-    ANTHROPIC_FORMATTED_MESSAGES = ANTHROPIC_FORMATTED_MESSAGES?.map(
-      (message: any) => {
-        const messageContent =
-          typeof message?.content === "string"
-            ? [message.content]
-            : message?.content
+    const formattedMessages = userMessages.map((message: any) => {
+      let messageContent = message.content
 
+      // If content is a string, convert it to the expected format
+      if (typeof messageContent === "string") {
+        if (!messageContent.trim()) {
+          throw new Error("Message content cannot be empty")
+        }
         return {
-          ...message,
-          content: messageContent.map((content: any) => {
-            if (typeof content === "string") {
-              // Handle the case where content is a string
-              return { type: "text", text: content }
-            } else if (
-              content?.type === "image_url" &&
-              content?.image_url?.url?.length
-            ) {
+          role:
+            message.role === "user"
+              ? ("user" as const)
+              : ("assistant" as const),
+          content: messageContent
+        }
+      }
+
+      // If content is an array, process each item
+      if (Array.isArray(messageContent)) {
+        const processedContent = messageContent
+          .map((item: any) => {
+            if (typeof item === "string") {
+              return item.trim() ? { type: "text", text: item } : null
+            }
+
+            if (item.type === "text") {
+              return item.text?.trim() ? item : null
+            }
+
+            if (item.type === "image_url" && item.image_url?.url) {
               return {
                 type: "image",
                 source: {
                   type: "base64",
-                  media_type: getMediaTypeFromDataURL(content.image_url.url),
-                  data: getBase64FromDataURL(content.image_url.url)
+                  media_type: getMediaTypeFromDataURL(item.image_url.url),
+                  data: getBase64FromDataURL(item.image_url.url)
                 }
               }
-            } else {
-              return content
             }
+
+            return null
           })
+          .filter(Boolean) // Remove null values
+
+        if (processedContent.length === 0) {
+          throw new Error("Message content cannot be empty")
+        }
+
+        return {
+          role:
+            message.role === "user"
+              ? ("user" as const)
+              : ("assistant" as const),
+          content: processedContent
         }
       }
-    )
+
+      throw new Error("Invalid message format")
+    })
+
+    if (formattedMessages.length === 0) {
+      throw new Error("No valid messages to send")
+    }
 
     const anthropic = new Anthropic({
       apiKey: profile.anthropic_api_key || ""
     })
 
     try {
+      console.log("Sending request to Anthropic API:", {
+        model: chatSettings.model,
+        messageCount: formattedMessages.length,
+        temperature: chatSettings.temperature,
+        hasSystemMessage: !!systemMessage
+      })
+
       const response = await anthropic.messages.create({
         model: chatSettings.model,
-        messages: ANTHROPIC_FORMATTED_MESSAGES,
+        messages: formattedMessages,
         temperature: chatSettings.temperature,
-        system: messages[0].content,
+        system: systemMessage,
         max_tokens:
-          CHAT_SETTING_LIMITS[chatSettings.model].MAX_TOKEN_OUTPUT_LENGTH,
+          CHAT_SETTING_LIMITS[chatSettings.model]?.MAX_TOKEN_OUTPUT_LENGTH ||
+          4096,
         stream: true
       })
 
@@ -74,25 +115,29 @@ export async function POST(request: NextRequest) {
         const stream = AnthropicStream(response)
         return new StreamingTextResponse(stream)
       } catch (error: any) {
-        console.error("Error parsing Anthropic API response:", error)
+        console.error("Error parsing Anthropic stream:", error)
         return new NextResponse(
           JSON.stringify({
             message:
-              "An error occurred while parsing the Anthropic API response"
+              "Error parsing Anthropic stream: " +
+              (error.message || "Unknown error")
           }),
           { status: 500 }
         )
       }
     } catch (error: any) {
-      console.error("Error calling Anthropic API:", error)
+      console.error("Anthropic API error:", error)
+      const errorMessage =
+        error.error?.message || error.message || "Unknown error"
       return new NextResponse(
         JSON.stringify({
-          message: "An error occurred while calling the Anthropic API"
+          message: "Anthropic API error: " + errorMessage
         }),
-        { status: 500 }
+        { status: error.status || 500 }
       )
     }
   } catch (error: any) {
+    console.error("Request processing error:", error)
     let errorMessage = error.message || "An unexpected error occurred"
     const errorCode = error.status || 500
 
@@ -104,8 +149,14 @@ export async function POST(request: NextRequest) {
         "Anthropic API Key is incorrect. Please fix it in your profile settings."
     }
 
-    return new NextResponse(JSON.stringify({ message: errorMessage }), {
-      status: errorCode
-    })
+    return new NextResponse(
+      JSON.stringify({
+        message: errorMessage,
+        code: errorCode
+      }),
+      {
+        status: errorCode
+      }
+    )
   }
 }

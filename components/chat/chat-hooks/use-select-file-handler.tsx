@@ -11,7 +11,9 @@ export const ACCEPTED_FILE_TYPES = [
   "application/json",
   "text/markdown",
   "application/pdf",
-  "text/plain"
+  "text/plain",
+  "application/sql",
+  "text/sql"
 ].join(",")
 
 export const useSelectFileHandler = () => {
@@ -52,19 +54,28 @@ export const useSelectFileHandler = () => {
     setUseRetrieval(true)
 
     if (file) {
-      let simplifiedFileType = file.type.split("/")[1]
+      let simplifiedFileType = file.type ? file.type.split("/")[1] : ""
+      const fileExtension = file.name.split(".").pop()?.toLowerCase()
 
       let reader = new FileReader()
 
-      if (file.type.includes("image")) {
+      if (file.type && file.type.includes("image")) {
         reader.readAsDataURL(file)
-      } else if (ACCEPTED_FILE_TYPES.split(",").includes(file.type)) {
-        if (simplifiedFileType.includes("vnd.adobe.pdf")) {
+      } else if (
+        ACCEPTED_FILE_TYPES.split(",").includes(file.type) ||
+        fileExtension === "sql"
+      ) {
+        if (!simplifiedFileType && fileExtension === "sql") {
+          simplifiedFileType = "sql"
+        } else if (
+          simplifiedFileType &&
+          simplifiedFileType.includes("vnd.adobe.pdf")
+        ) {
           simplifiedFileType = "pdf"
         } else if (
+          simplifiedFileType &&
           simplifiedFileType.includes(
-            "vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-              "docx"
+            "vnd.openxmlformats-officedocument.wordprocessingml.document"
           )
         ) {
           simplifiedFileType = "docx"
@@ -75,12 +86,11 @@ export const useSelectFileHandler = () => {
           {
             id: "loading",
             name: file.name,
-            type: simplifiedFileType,
+            type: simplifiedFileType || "sql",
             file: file
           }
         ])
 
-        // Handle docx files
         if (
           file.type.includes(
             "vnd.openxmlformats-officedocument.wordprocessingml.document" ||
@@ -127,7 +137,6 @@ export const useSelectFileHandler = () => {
 
           return
         } else {
-          // Use readAsArrayBuffer for PDFs and readAsText for other types
           file.type.includes("pdf")
             ? reader.readAsArrayBuffer(file)
             : reader.readAsText(file)
@@ -139,16 +148,14 @@ export const useSelectFileHandler = () => {
       reader.onloadend = async function () {
         try {
           if (file.type.includes("image")) {
-            // Create a temp url for the image file
             const imageUrl = URL.createObjectURL(file)
 
-            // This is a temporary image for display purposes in the chat input
             setNewMessageImages(prev => [
               ...prev,
               {
                 messageId: "temp",
                 path: "",
-                base64: reader.result, // base64 image
+                base64: reader.result,
                 url: imageUrl,
                 file
               }

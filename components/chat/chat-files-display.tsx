@@ -75,27 +75,51 @@ export const ChatFilesDisplay: FC<ChatFilesDisplayProps> = ({}) => {
   return showFilesDisplay && combinedMessageFiles.length > 0 ? (
     <>
       {showPreview && selectedImage && (
-        <FilePreview
-          type="image"
-          item={selectedImage}
-          isOpen={showPreview}
-          onOpenChange={(isOpen: boolean) => {
-            setShowPreview(isOpen)
-            setSelectedImage(null)
-          }}
-        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background relative max-h-[80vh] max-w-[80vw] overflow-auto rounded-lg p-4">
+            <Image
+              className="rounded"
+              src={selectedImage.base64 || selectedImage.url}
+              alt="File image"
+              width={2000}
+              height={2000}
+              style={{
+                maxHeight: "67vh",
+                maxWidth: "67vw"
+              }}
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2"
+              onClick={() => {
+                setShowPreview(false)
+                setSelectedImage(null)
+              }}
+            >
+              <IconX className="size-4" />
+            </Button>
+          </div>
+        </div>
       )}
 
       {showPreview && selectedFile && (
-        <FilePreview
-          type="file"
-          item={selectedFile}
-          isOpen={showPreview}
-          onOpenChange={(isOpen: boolean) => {
-            setShowPreview(isOpen)
-            setSelectedFile(null)
-          }}
-        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background relative max-h-[80vh] max-w-[80vw] overflow-auto rounded-lg p-4">
+            <FilePreview file={selectedFile} />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2"
+              onClick={() => {
+                setShowPreview(false)
+                setSelectedFile(null)
+              }}
+            >
+              <IconX className="size-4" />
+            </Button>
+          </div>
+        </div>
       )}
 
       <div className="space-y-2">
@@ -114,113 +138,81 @@ export const ChatFilesDisplay: FC<ChatFilesDisplayProps> = ({}) => {
           </Button>
         </div>
 
-        <div className="overflow-auto">
-          <div className="flex gap-2 overflow-auto pt-2">
-            {messageImages.map((image, index) => (
-              <div
-                key={index}
-                className="relative flex h-[64px] cursor-pointer items-center space-x-4 rounded-xl hover:opacity-50"
-              >
-                <Image
-                  className="rounded"
-                  // Force the image to be 56px by 56px
-                  style={{
-                    minWidth: "56px",
-                    minHeight: "56px",
-                    maxHeight: "56px",
-                    maxWidth: "56px"
-                  }}
-                  src={image.base64} // Preview images will always be base64
-                  alt="File image"
-                  width={56}
-                  height={56}
+        <div className="flex max-h-[300px] flex-wrap gap-2 overflow-auto">
+          {combinedMessageFiles.map((item, index) => {
+            if ("messageId" in item) {
+              // Handle MessageImage
+              return (
+                <div
+                  key={item.messageId}
+                  className="hover:border-primary relative flex h-[64px] w-[200px] cursor-pointer items-center justify-center rounded-lg border-2 border-dashed p-2"
                   onClick={() => {
-                    setSelectedImage(image)
+                    setSelectedImage(item)
                     setShowPreview(true)
                   }}
-                />
-
-                <IconX
-                  className="bg-muted-foreground border-primary absolute right-[-6px] top-[-2px] flex size-5 cursor-pointer items-center justify-center rounded-full border-DEFAULT text-[10px] hover:border-red-500 hover:bg-white hover:text-red-500"
-                  onClick={e => {
-                    e.stopPropagation()
-                    setNewMessageImages(
-                      newMessageImages.filter(
-                        f => f.messageId !== image.messageId
+                >
+                  <Image
+                    className="rounded"
+                    src={item.base64 || item.url}
+                    alt="File image"
+                    width={56}
+                    height={56}
+                    style={{
+                      minWidth: "56px",
+                      minHeight: "56px",
+                      maxHeight: "56px",
+                      maxWidth: "56px"
+                    }}
+                  />
+                  <IconX
+                    className="bg-muted-foreground border-primary absolute right-[-6px] top-[-6px] flex size-5 cursor-pointer items-center justify-center rounded-full border-DEFAULT text-[10px] hover:border-red-500 hover:bg-white hover:text-red-500"
+                    onClick={e => {
+                      e.stopPropagation()
+                      setNewMessageImages(
+                        newMessageImages.filter(
+                          f => f.messageId !== item.messageId
+                        )
                       )
-                    )
-                    setChatImages(
-                      chatImages.filter(f => f.messageId !== image.messageId)
-                    )
-                  }}
-                />
-              </div>
-            ))}
-
-            {combinedChatFiles.map((file, index) =>
-              file.id === "loading" ? (
+                      setChatImages(
+                        chatImages.filter(f => f.messageId !== item.messageId)
+                      )
+                    }}
+                  />
+                </div>
+              )
+            } else {
+              // Handle ChatFile
+              return item.id === "loading" ? (
                 <div
                   key={index}
-                  className="relative flex h-[64px] items-center space-x-4 rounded-xl border-2 px-4 py-3"
+                  className="flex h-[64px] w-[200px] items-center justify-center rounded-lg border-2 border-dashed"
                 >
-                  <div className="rounded bg-blue-500 p-2">
-                    <IconLoader2 className="animate-spin" />
-                  </div>
-
-                  <div className="truncate text-sm">
-                    <div className="truncate">{file.name}</div>
-                    <div className="truncate opacity-50">{file.type}</div>
-                  </div>
+                  <IconLoader2 className="animate-spin" />
                 </div>
               ) : (
                 <div
-                  key={file.id}
-                  className="relative flex h-[64px] cursor-pointer items-center space-x-4 rounded-xl border-2 px-4 py-3 hover:opacity-50"
-                  onClick={() => getLinkAndView(file)}
+                  key={item.id}
+                  className="hover:border-primary relative flex h-[64px] w-[200px] cursor-pointer items-center justify-center rounded-lg border-2 border-dashed p-2"
+                  onClick={() => {
+                    setSelectedFile(item)
+                    setShowPreview(true)
+                  }}
                 >
-                  <div className="rounded bg-blue-500 p-2">
-                    {(() => {
-                      let fileExtension = file.type.includes("/")
-                        ? file.type.split("/")[1]
-                        : file.type
-
-                      switch (fileExtension) {
-                        case "pdf":
-                          return <IconFileTypePdf />
-                        case "markdown":
-                          return <IconMarkdown />
-                        case "txt":
-                          return <IconFileTypeTxt />
-                        case "json":
-                          return <IconJson />
-                        case "csv":
-                          return <IconFileTypeCsv />
-                        case "docx":
-                          return <IconFileTypeDocx />
-                        default:
-                          return <IconFileFilled />
-                      }
-                    })()}
-                  </div>
-
-                  <div className="truncate text-sm">
-                    <div className="truncate">{file.name}</div>
-                  </div>
-
+                  <FilePreview file={item} />
                   <IconX
                     className="bg-muted-foreground border-primary absolute right-[-6px] top-[-6px] flex size-5 cursor-pointer items-center justify-center rounded-full border-DEFAULT text-[10px] hover:border-red-500 hover:bg-white hover:text-red-500"
                     onClick={e => {
                       e.stopPropagation()
                       setNewMessageFiles(
-                        newMessageFiles.filter(f => f.id !== file.id)
+                        newMessageFiles.filter(f => f.id !== item.id)
                       )
-                      setChatFiles(chatFiles.filter(f => f.id !== file.id))
+                      setChatFiles(chatFiles.filter(f => f.id !== item.id))
                     }}
                   />
                 </div>
               )
-            )}
-          </div>
+            }
+          })}
         </div>
       </div>
     </>

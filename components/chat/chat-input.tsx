@@ -6,7 +6,8 @@ import {
   IconBolt,
   IconCirclePlus,
   IconPlayerStopFilled,
-  IconSend
+  IconSend,
+  IconPaperclip
 } from "@tabler/icons-react"
 import Image from "next/image"
 import { FC, useContext, useEffect, useRef, useState } from "react"
@@ -20,6 +21,9 @@ import { useChatHandler } from "./chat-hooks/use-chat-handler"
 import { useChatHistoryHandler } from "./chat-hooks/use-chat-history"
 import { usePromptAndCommand } from "./chat-hooks/use-prompt-and-command"
 import { useSelectFileHandler } from "./chat-hooks/use-select-file-handler"
+import { Button } from "../ui/button"
+import { FileUploadModal } from "../ui/file-upload-modal"
+import { ChatFile } from "@/types"
 
 interface ChatInputProps {}
 
@@ -54,7 +58,8 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
     chatSettings,
     selectedTools,
     setSelectedTools,
-    assistantImages
+    assistantImages,
+    setNewMessageFiles
   } = useContext(ChatbotUIContext)
 
   const {
@@ -74,6 +79,8 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
   } = useChatHistoryHandler()
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
 
   useEffect(() => {
     setTimeout(() => {
@@ -160,6 +167,10 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
         handleSelectDeviceFile(file)
       }
     }
+  }
+
+  const handleFilesSelected = (files: ChatFile[]) => {
+    setNewMessageFiles(prev => [...prev, ...files])
   }
 
   return (
@@ -276,6 +287,31 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
           )}
         </div>
       </div>
+
+      <div className="flex items-center space-x-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsUploadModalOpen(true)}
+        >
+          <IconPaperclip className="size-4" />
+        </Button>
+      </div>
+
+      <FileUploadModal
+        isOpen={isUploadModalOpen}
+        onOpenChange={setIsUploadModalOpen}
+        onFilesSelected={handleFilesSelected}
+        acceptedFileTypes={[
+          "text/*",
+          "application/json",
+          "application/sql",
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ]}
+        maxFiles={10}
+      />
     </>
   )
 }

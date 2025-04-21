@@ -9,15 +9,24 @@ import {
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
 import { Database } from "@/supabase/types"
 import { FileItemChunk } from "@/types"
-import { createClient } from "@supabase/supabase-js"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import OpenAI from "openai"
 
 export async function POST(req: Request) {
   try {
-    const supabaseAdmin = createClient<Database>(
+    const cookieStore = cookies()
+    const supabaseAdmin = createServerClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          }
+        }
+      }
     )
 
     const profile = await getServerProfile()
@@ -89,6 +98,7 @@ export async function POST(req: Request) {
         chunks = await processPdf(blob)
         break
       case "txt":
+      case "sql":
         chunks = await processTxt(blob)
         break
       default:

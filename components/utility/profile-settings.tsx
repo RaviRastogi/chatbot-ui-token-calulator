@@ -118,6 +118,14 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
     profile?.openrouter_api_key || ""
   )
 
+  const [awsAccessKeyId, setAwsAccessKeyId] = useState(
+    profile?.aws_access_key_id || ""
+  )
+  const [awsSecretAccessKey, setAwsSecretAccessKey] = useState(
+    profile?.aws_secret_access_key || ""
+  )
+  const [awsRegion, setAwsRegion] = useState(profile?.aws_region || "")
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push("/login")
@@ -157,7 +165,10 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
       azure_openai_45_turbo_id: azureOpenai45TurboID,
       azure_openai_45_vision_id: azureOpenai45VisionID,
       azure_openai_embeddings_id: azureEmbeddingsID,
-      openrouter_api_key: openrouterAPIKey
+      openrouter_api_key: openrouterAPIKey,
+      aws_access_key_id: awsAccessKeyId,
+      aws_secret_access_key: awsSecretAccessKey,
+      aws_region: awsRegion
     })
 
     setProfile(updatedProfile)
@@ -722,6 +733,36 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
                     />
                   </>
                 )}
+              </div>
+
+              <div className="space-y-1">
+                <Label>AWS Access Key ID</Label>
+                <Input
+                  type="password"
+                  value={awsAccessKeyId}
+                  onChange={e => setAwsAccessKeyId(e.target.value)}
+                  placeholder="AWS Access Key ID"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label>AWS Secret Access Key</Label>
+                <Input
+                  type="password"
+                  value={awsSecretAccessKey}
+                  onChange={e => setAwsSecretAccessKey(e.target.value)}
+                  placeholder="AWS Secret Access Key"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label>AWS Region</Label>
+                <Input
+                  type="text"
+                  value={awsRegion}
+                  onChange={e => setAwsRegion(e.target.value)}
+                  placeholder="e.g., us-east-1"
+                />
               </div>
             </TabsContent>
           </Tabs>

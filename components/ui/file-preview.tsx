@@ -1,68 +1,44 @@
-import { cn } from "@/lib/utils"
-import { Tables } from "@/supabase/types"
-import { ChatFile, MessageImage } from "@/types"
-import { IconFileFilled } from "@tabler/icons-react"
-import Image from "next/image"
 import { FC } from "react"
-import { DrawingCanvas } from "../utility/drawing-canvas"
-import { Dialog, DialogContent } from "./dialog"
+import { ChatFile } from "@/types"
+import {
+  IconFileTypeCsv,
+  IconFileTypeDocx,
+  IconFileTypePdf,
+  IconFileTypeTxt,
+  IconJson,
+  IconMarkdown
+} from "@tabler/icons-react"
+import { cn } from "@/lib/utils"
 
 interface FilePreviewProps {
-  type: "image" | "file" | "file_item"
-  item: ChatFile | MessageImage | Tables<"file_items">
-  isOpen: boolean
-  onOpenChange: (isOpen: boolean) => void
+  file: ChatFile
+  className?: string
 }
 
-export const FilePreview: FC<FilePreviewProps> = ({
-  type,
-  item,
-  isOpen,
-  onOpenChange
-}) => {
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent
-        className={cn(
-          "flex items-center justify-center outline-none",
-          "border-transparent bg-transparent"
-        )}
-      >
-        {(() => {
-          if (type === "image") {
-            const imageItem = item as MessageImage
+export const FilePreview: FC<FilePreviewProps> = ({ file, className }) => {
+  const getFileIcon = () => {
+    switch (file.type) {
+      case "text/csv":
+        return <IconFileTypeCsv className="size-6" />
+      case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        return <IconFileTypeDocx className="size-6" />
+      case "application/pdf":
+        return <IconFileTypePdf className="size-6" />
+      case "text/plain":
+        return <IconFileTypeTxt className="size-6" />
+      case "application/json":
+        return <IconJson className="size-6" />
+      case "text/markdown":
+        return <IconMarkdown className="size-6" />
+      default:
+        return <IconFileTypeTxt className="size-6" />
+    }
+  }
 
-            return imageItem.file ? (
-              <DrawingCanvas imageItem={imageItem} />
-            ) : (
-              <Image
-                className="rounded"
-                src={imageItem.base64 || imageItem.url}
-                alt="File image"
-                width={2000}
-                height={2000}
-                style={{
-                  maxHeight: "67vh",
-                  maxWidth: "67vw"
-                }}
-              />
-            )
-          } else if (type === "file_item") {
-            const fileItem = item as Tables<"file_items">
-            return (
-              <div className="bg-background text-primary h-[50vh] min-w-[700px] overflow-auto whitespace-pre-wrap rounded-xl p-4">
-                <div>{fileItem.content}</div>
-              </div>
-            )
-          } else if (type === "file") {
-            return (
-              <div className="rounded bg-blue-500 p-2">
-                <IconFileFilled />
-              </div>
-            )
-          }
-        })()}
-      </DialogContent>
-    </Dialog>
+  return (
+    <div className={cn("flex items-center space-x-2", className)}>
+      {getFileIcon()}
+      <span className="truncate text-sm">{file.name}</span>
+    </div>
   )
 }
