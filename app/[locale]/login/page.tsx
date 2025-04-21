@@ -15,9 +15,9 @@ export const metadata: Metadata = {
 }
 
 export default async function Login({
-  searchParams
+  searchParams = { message: "" }
 }: {
-  searchParams: { message: string }
+  searchParams?: { message?: string }
 }) {
   const cookieStore = cookies()
   const supabase = createServerClient<Database>(

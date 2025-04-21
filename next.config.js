@@ -3,7 +3,8 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
 })
 
 const withPWA = require("next-pwa")({
-  dest: "public"
+  dest: "public",
+  disable: process.env.NODE_ENV === "development"
 })
 
 module.exports = withBundleAnalyzer(
@@ -27,6 +28,13 @@ module.exports = withBundleAnalyzer(
     },
     experimental: {
       serverComponentsExternalPackages: ["sharp", "onnxruntime-node"]
+    },
+    env: {
+      AZURE_OPENAI_API_KEY: process.env.AZURE_OPENAI_API_KEY,
+      AZURE_OPENAI_ENDPOINT: process.env.AZURE_OPENAI_ENDPOINT,
+      AZURE_OPENAI_35_TURBO_ID: process.env.AZURE_OPENAI_35_TURBO_ID,
+      AZURE_OPENAI_45_TURBO_ID: process.env.AZURE_OPENAI_45_TURBO_ID,
+      AZURE_OPENAI_45_VISION_ID: process.env.AZURE_OPENAI_45_VISION_ID
     }
   })
 )

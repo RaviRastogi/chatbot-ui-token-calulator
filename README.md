@@ -1,12 +1,9 @@
 # Chatbot UI
-
 The open-source AI chat app for everyone.
-
-<img src="./public/readme/screenshot.png" alt="Chatbot UI" width="600">
 
 ## Demo
 This is where the original code for the chatbot ui is.
-View the latest demo [here](https://x.com/mckaywrigley/status/1738273242283151777?s=20).
+View the latest demo [here](https://x.com/mckaywrclearigley/status/1738273242283151777?s=20).
 
 
 ## Instructions. 
@@ -54,6 +51,15 @@ brew install supabase/tap/supabase
 **Windows**
 
 ```bash
+npm install supabase --save-dev
+npm run chat # this will start supabase locally
+npm run update #this will update the databaseYou 
+npm run db-reset # this will reset the database
+npm run db-push #this will push database changes
+```
+##these are other options to install supasbase depending on whats available on your computer. 
+```base
+npm install -g supabase
 scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
 scoop install supabase
 ```
@@ -63,7 +69,7 @@ scoop install supabase
 In your terminal at the root of your local Chatbot UI repository, run:
 
 ```bash
-supabase start
+npx supabase start
 ```
 
 ### 4. Fill in Secrets
@@ -79,7 +85,7 @@ cp .env.local.example .env.local
 Get the required values by running:
 
 ```bash
-supabase status
+npx supabase status
 ```
 
 Note: Use `API URL` from `supabase status` for `NEXT_PUBLIC_SUPABASE_URL`
@@ -92,20 +98,46 @@ If the environment variable is set, it will disable the input in the user settin
 
 In the 1st migration file `supabase/migrations/20240108234540_setup.sql` you will need to replace 2 values with the values you got above:
 
-- `project_url` (line 53): `http://supabase_kong_chatbotui:8000` (default) can remain unchanged if you don't change your `project_id` in the `config.toml` file
+- `project_url` (line 53): `http://cdrh-assistant:8000` (default) can remain unchanged if you don't change your `project_id` in the `config.toml` file
 - `service_role_key` (line 54): You got this value from running `supabase status`
 
 This prevents issues with storage files not being deleted properly.
 
 ### 5. Install Ollama (optional for local models)
 
+#### Windows Installation
+
+1. Download the Windows installer from [Ollama's releases page](https://github.com/ollama/ollama/releases)
+2. Run the installer (OllamaSetup.exe)
+3. After installation, open a new terminal and verify the installation:
+```bash
+ollama --version
+```
+
+#### MacOS/Linux Installation
+
 Follow the instructions [here](https://github.com/jmorganca/ollama#macos).
+
+#### Using Ollama
+
+After installation, you can pull and run models. For example:
+```bash
+ollama pull llama2
+ollama run llama2
+```
+
+Make sure to set the `NEXT_PUBLIC_OLLAMA_URL` environment variable in your `.env.local` file:
+```
+NEXT_PUBLIC_OLLAMA_URL=http://localhost:11434
+```
 
 ### 6. Run app locally
 
 In your terminal at the root of your local Chatbot UI repository, run:
 
 ```bash
+docker stop $(docker ps -a -q)
+docker rm $(docker ps -a -q)
 npm run chat
 ```
 
@@ -206,10 +238,6 @@ In environment variables, add the following from the values you got above:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `NEXT_PUBLIC_OLLAMA_URL` (only needed when using local Ollama models; default: `http://localhost:11434`)
-
-You can also add API keys as environment variables.
-
-- `OPENAI_API_KEY`
 - `AZURE_OPENAI_API_KEY`
 - `AZURE_OPENAI_ENDPOINT`
 - `AZURE_GPT_45_VISION_NAME`
